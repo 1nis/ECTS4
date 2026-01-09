@@ -57,7 +57,7 @@ def charger_configuration():
 def decoder_payload_milesight(payload_hex: str) -> dict:
     """
     Décode un payload hexadécimal Milesight/IPSO pour AT101
-    Structure correcte : [CHANNEL_ID] [CHANNEL_TYPE] [DATA]
+    Structure : [CHANNEL_ID] [CHANNEL_TYPE] [DATA]
     """
     result = {
         "battery": None,
@@ -70,60 +70,53 @@ def decoder_payload_milesight(payload_hex: str) -> dict:
         return result
 
     try:
-        # Nettoyer la chaîne
+        # Nettoyage
         payload_hex = payload_hex.replace(" ", "").replace("0x", "").lower()
         data = bytes.fromhex(payload_hex)
         i = 0
 
         while i < len(data):
-            # Sécurité: il faut au moins 2 octets pour lire ID et TYPE
-            if i + 2 > len(data):
-                break
+            # Sécurité pour lire ID et TYPE
+            if i + 2 > len(data): break
 
-            channel_id = data[i]        # On lit l'ID (ex: 01)
-            channel_type = data[i + 1]  # On lit le TYPE (ex: 75 pour batterie)
-            i += 2                      # On avance de 2 pour lire la donnée ensuite
+            channel_id = data[i]
+            channel_type = data[i + 1]
+            i += 2
 
-            # TYPE 0x01 (Digital Input) OU 0x75 (Battery Level)
-            # Milesight utilise souvent Type 0x75 pour la batterie, mais parfois ID 01
-            if channel_type == 0x75 or (channel_id == 0x01 and channel_type == 0x01): # Adaptation robuste
+            # --- BATTERIE (Type 0x01 ou 0x75) ---
+            # Le AT101 envoie parfois ID=01 Type=75 (Battery Level)
+            if channel_type == 0x75 or (channel_id == 0x01 and channel_type == 0x01):
                 if i + 1 <= len(data):
                     result["battery"] = data[i]
                     i += 1
                 
-            # TYPE 0x67: Température
+            # --- TEMPERATURE (Type 0x67) ---
             elif channel_type == 0x67:
                 if i + 2 <= len(data):
                     temp_raw = int.from_bytes(data[i:i + 2], byteorder='little', signed=True)
                     result["temperature"] = temp_raw / 10.0
                     i += 2
 
-            # TYPE 0x88: GPS
+            # --- GPS (Type 0x88) ---
             elif channel_type == 0x88:
                 if i + 8 <= len(data):
                     lat_raw = int.from_bytes(data[i:i + 4], byteorder='little', signed=True)
                     lon_raw = int.from_bytes(data[i + 4:i + 8], byteorder='little', signed=True)
-
-                    # Gestion du cas "No Fix" (FFFF...)
+                    
+                    # Filtre les erreurs (FFFF...) et valeurs hors limites
                     if lat_raw != -1 and lon_raw != -1: 
-                        # Vérification de cohérence (lat entre -90 et 90)
                         lat_val = lat_raw / 1000000.0
                         lon_val = lon_raw / 1000000.0
                         if -90 <= lat_val <= 90 and -180 <= lon_val <= 180:
                             result["latitude"] = lat_val
                             result["longitude"] = lon_val
-                    
                     i += 8
             
-            # Autre type inconnu : on essaie d'avancer prudemment
-            # (Note : dans un vrai décodeur complet, il faudrait gérer tous les types pour savoir de combien avancer)
+            # --- Inconnu ---
             else:
-                # Si on ne connait pas le type, on risque de désaligner la lecture. 
-                # Pour l'AT101, on a couvert les principaux. 
-                break 
+                break # On arrête pour éviter de lire n'importe quoi
 
-    except Exception as e:
-        print(f"Erreur de décodage: {e}")
+    except Exception:
         pass
 
     return result
@@ -168,6 +161,7 @@ def aplatir_donnees(donnees_brutes: list) -> pd.DataFrame:
     """
     Aplatit les données JSON imbriquées en DataFrame Pandas
     Version robuste avec décodage local des payloads Milesight hex
+    ET correction du fuseau horaire (UTC -> Paris)
     """
     if not donnees_brutes:
         return pd.DataFrame()
@@ -273,12 +267,28 @@ def aplatir_donnees(donnees_brutes: list) -> pd.DataFrame:
     # Création du DataFrame
     df = pd.DataFrame(enregistrements)
 
-    # Conversion des types de données
+    # Conversion des types de données numériques
     for col in ["Temperature", "Latitude", "Longitude", "Batterie"]:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    # Tri par timestamp décroissant
+    # --- CORRECTION DU FUSEAU HORAIRE (Ajouté) ---
+    if "Timestamp" in df.columns and not df.empty:
+        # S'assurer que c'est bien un format datetime
+        df["Timestamp"] = pd.to_datetime(df["Timestamp"])
+        
+        # Si la date n'a pas de fuseau (naive), on considère que c'est UTC (car Live Objects envoie en UTC)
+        if df["Timestamp"].dt.tz is None:
+            df["Timestamp"] = df["Timestamp"].dt.tz_localize("UTC")
+        
+        # Conversion vers le fuseau horaire de Paris
+        try:
+            df["Timestamp"] = df["Timestamp"].dt.tz_convert("Europe/Paris")
+        except Exception:
+            # Fallback simple : ajout manuel d'une heure si la librairie tzdata manque
+            df["Timestamp"] = df["Timestamp"] + pd.Timedelta(hours=1)
+
+    # Tri par timestamp décroissant (le plus récent en premier)
     if "Timestamp" in df.columns and not df.empty:
         df = df.sort_values("Timestamp", ascending=False).reset_index(drop=True)
 
