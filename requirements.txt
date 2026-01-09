@@ -15,3 +15,6 @@ requests>=2.31.0
 
 # Chargement des variables d'environnement
 python-dotenv>=1.0.0
+
+# Rafraîchissement automatique du dashboard
+streamlit-autorefresh>=1.0.1

@@ -13,6 +13,7 @@ import pandas as pd
 import requests
 from datetime import datetime
 from dotenv import load_dotenv
+from streamlit_autorefresh import st_autorefresh
 
 # =============================================================================
 # CONFIGURATION DE LA PAGE STREAMLIT
@@ -56,17 +57,7 @@ def charger_configuration():
 def decoder_payload_milesight(payload_hex: str) -> dict:
     """
     Décode un payload hexadécimal Milesight/IPSO pour AT101
-
-    Format des channels:
-    - 0x01: Batterie (1 byte, valeur brute en %)
-    - 0x67: Température (2 bytes, little endian, signed, /10 pour °C)
-    - 0x88: GPS (8 bytes: lat 4B + lon 4B, signed little endian, /1000000)
-
-    Args:
-        payload_hex: Chaîne hexadécimale (ex: "0700010488ffffffffffffffff32")
-
-    Returns:
-        dict avec keys: battery, temperature, latitude, longitude
+    Structure correcte : [CHANNEL_ID] [CHANNEL_TYPE] [DATA]
     """
     result = {
         "battery": None,
@@ -79,56 +70,63 @@ def decoder_payload_milesight(payload_hex: str) -> dict:
         return result
 
     try:
-        # Nettoyer la chaîne hex (supprimer espaces, 0x, etc.)
+        # Nettoyer la chaîne
         payload_hex = payload_hex.replace(" ", "").replace("0x", "").lower()
         data = bytes.fromhex(payload_hex)
         i = 0
 
         while i < len(data):
-            channel = data[i]
+            # Sécurité: il faut au moins 2 octets pour lire ID et TYPE
+            if i + 2 > len(data):
+                break
 
-            if channel == 0x01:
-                # Batterie: 1 byte après le channel
-                if i + 1 < len(data):
-                    result["battery"] = data[i + 1]
-                    i += 2
-                else:
+            channel_id = data[i]        # On lit l'ID (ex: 01)
+            channel_type = data[i + 1]  # On lit le TYPE (ex: 75 pour batterie)
+            i += 2                      # On avance de 2 pour lire la donnée ensuite
+
+            # TYPE 0x01 (Digital Input) OU 0x75 (Battery Level)
+            # Milesight utilise souvent Type 0x75 pour la batterie, mais parfois ID 01
+            if channel_type == 0x75 or (channel_id == 0x01 and channel_type == 0x01): # Adaptation robuste
+                if i + 1 <= len(data):
+                    result["battery"] = data[i]
                     i += 1
-
-            elif channel == 0x67:
-                # Température: 2 bytes après le channel, little endian, signed, /10
-                if i + 2 < len(data):
-                    temp_raw = int.from_bytes(data[i + 1:i + 3], byteorder='little', signed=True)
+                
+            # TYPE 0x67: Température
+            elif channel_type == 0x67:
+                if i + 2 <= len(data):
+                    temp_raw = int.from_bytes(data[i:i + 2], byteorder='little', signed=True)
                     result["temperature"] = temp_raw / 10.0
-                    i += 3
-                else:
-                    i += 1
+                    i += 2
 
-            elif channel == 0x88:
-                # GPS: 8 bytes après le channel (lat 4B + lon 4B)
-                if i + 8 < len(data):
-                    lat_raw = int.from_bytes(data[i + 1:i + 5], byteorder='little', signed=True)
-                    lon_raw = int.from_bytes(data[i + 5:i + 9], byteorder='little', signed=True)
+            # TYPE 0x88: GPS
+            elif channel_type == 0x88:
+                if i + 8 <= len(data):
+                    lat_raw = int.from_bytes(data[i:i + 4], byteorder='little', signed=True)
+                    lon_raw = int.from_bytes(data[i + 4:i + 8], byteorder='little', signed=True)
 
-                    # Vérifier "No Fix" (0xFFFFFFFF = -1 en signed 32 bits)
-                    if lat_raw != -1 and lon_raw != -1:
-                        result["latitude"] = lat_raw / 1000000.0
-                        result["longitude"] = lon_raw / 1000000.0
-                    # Sinon, on laisse None (pas de position valide)
-
-                    i += 9
-                else:
-                    i += 1
+                    # Gestion du cas "No Fix" (FFFF...)
+                    if lat_raw != -1 and lon_raw != -1: 
+                        # Vérification de cohérence (lat entre -90 et 90)
+                        lat_val = lat_raw / 1000000.0
+                        lon_val = lon_raw / 1000000.0
+                        if -90 <= lat_val <= 90 and -180 <= lon_val <= 180:
+                            result["latitude"] = lat_val
+                            result["longitude"] = lon_val
+                    
+                    i += 8
+            
+            # Autre type inconnu : on essaie d'avancer prudemment
+            # (Note : dans un vrai décodeur complet, il faudrait gérer tous les types pour savoir de combien avancer)
             else:
-                # Channel inconnu, passer au byte suivant
-                i += 1
+                # Si on ne connait pas le type, on risque de désaligner la lecture. 
+                # Pour l'AT101, on a couvert les principaux. 
+                break 
 
-    except (ValueError, IndexError):
-        # Erreur de décodage, retourner les valeurs par défaut
+    except Exception as e:
+        print(f"Erreur de décodage: {e}")
         pass
 
     return result
-
 
 # =============================================================================
 # FONCTIONS DE RÉCUPÉRATION DES DONNÉES
@@ -509,6 +507,9 @@ def main():
     """
     Fonction principale de l'application
     """
+    # Rafraîchissement automatique toutes les 60 secondes (60000 ms)
+    st_autorefresh(interval=60000, limit=None, key="auto_refresh")
+
     # Titre de l'application
     st.title("🛰️ Dashboard GPS - Milesight AT101")
     st.markdown("*Visualisation des données du traceur GPS via Orange Live Objects*")
@@ -545,6 +546,7 @@ def main():
     # Informations de connexion
     st.sidebar.markdown("---")
     st.sidebar.success("✅ Connecté à Live Objects")
+    st.sidebar.info("🔄 Rafraîchissement auto: 1 min")
     st.sidebar.caption(f"Stream ID: {stream_id[:8]}...")
 
     # Récupération des données
