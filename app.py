@@ -63,7 +63,8 @@ def decoder_payload_milesight(payload_hex: str) -> dict:
         "battery": None,
         "temperature": None,
         "latitude": None,
-        "longitude": None
+        "longitude": None,
+        "tilt_alert": None
     }
 
     if not payload_hex or not isinstance(payload_hex, str):
@@ -89,7 +90,7 @@ def decoder_payload_milesight(payload_hex: str) -> dict:
                 if i + 1 <= len(data):
                     result["battery"] = data[i]
                     i += 1
-                
+
             # --- TEMPERATURE (Type 0x67) ---
             elif channel_type == 0x67:
                 if i + 2 <= len(data):
@@ -102,16 +103,22 @@ def decoder_payload_milesight(payload_hex: str) -> dict:
                 if i + 8 <= len(data):
                     lat_raw = int.from_bytes(data[i:i + 4], byteorder='little', signed=True)
                     lon_raw = int.from_bytes(data[i + 4:i + 8], byteorder='little', signed=True)
-                    
+
                     # Filtre les erreurs (FFFF...) et valeurs hors limites
-                    if lat_raw != -1 and lon_raw != -1: 
+                    if lat_raw != -1 and lon_raw != -1:
                         lat_val = lat_raw / 1000000.0
                         lon_val = lon_raw / 1000000.0
                         if -90 <= lat_val <= 90 and -180 <= lon_val <= 180:
                             result["latitude"] = lat_val
                             result["longitude"] = lon_val
                     i += 8
-            
+
+            # --- TILT ALERT / DEFLECTION ANGLE (Channel 0x05, Type 0x00) ---
+            elif channel_id == 0x05 and channel_type == 0x00:
+                if i + 1 <= len(data):
+                    result["tilt_alert"] = (data[i] == 1)
+                    i += 1
+
             # --- Inconnu ---
             else:
                 break # On arrête pour éviter de lire n'importe quoi
@@ -189,6 +196,7 @@ def aplatir_donnees(donnees_brutes: list) -> pd.DataFrame:
             longitude = None
             temperature = None
             batterie = None
+            tilt_alert = None
 
             # CAS 1: Payload brut hexadécimal (chaîne non décodée par le serveur)
             if isinstance(value, str):
@@ -198,6 +206,7 @@ def aplatir_donnees(donnees_brutes: list) -> pd.DataFrame:
                 longitude = decoded["longitude"]
                 temperature = decoded["temperature"]
                 batterie = decoded["battery"]
+                tilt_alert = decoded["tilt_alert"]
                 if any(v is not None for v in decoded.values()):
                     payloads_decodes += 1
 
@@ -212,6 +221,7 @@ def aplatir_donnees(donnees_brutes: list) -> pd.DataFrame:
                     longitude = decoded["longitude"]
                     temperature = decoded["temperature"]
                     batterie = decoded["battery"]
+                    tilt_alert = decoded["tilt_alert"]
                     if any(v is not None for v in decoded.values()):
                         payloads_decodes += 1
 
@@ -248,12 +258,16 @@ def aplatir_donnees(donnees_brutes: list) -> pd.DataFrame:
                         payload.get("bat")
                     )
 
+                    # Extraction de l'alerte de basculement
+                    tilt_alert = payload.get("tilt_alert") or payload.get("deflection")
+
             enregistrements.append({
                 "Timestamp": timestamp,
                 "Temperature": temperature,
                 "Latitude": latitude,
                 "Longitude": longitude,
-                "Batterie": batterie
+                "Batterie": batterie,
+                "Tilt_Alert": tilt_alert
             })
 
         except Exception:
@@ -332,7 +346,7 @@ def afficher_kpis(df: pd.DataFrame):
     """
     st.markdown("### 📊 Indicateurs en temps réel")
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
 
     if df.empty:
         with col1:
@@ -342,6 +356,8 @@ def afficher_kpis(df: pd.DataFrame):
         with col3:
             st.metric("Batterie", "N/A")
         with col4:
+            st.metric("Statut", "N/A")
+        with col5:
             st.metric("Dernière MAJ", "N/A")
         return
 
@@ -368,6 +384,10 @@ def afficher_kpis(df: pd.DataFrame):
         else:
             # Fallback : première ligne disponible
             ligne_kpi = df.iloc[0]
+
+    # Recherche de la dernière alerte de basculement connue
+    df_tilt = df.dropna(subset=["Tilt_Alert"]) if "Tilt_Alert" in df.columns else pd.DataFrame()
+    last_tilt = df_tilt.iloc[0]["Tilt_Alert"] if not df_tilt.empty else None
 
     # Affichage des KPIs depuis la ligne sélectionnée
     with col1:
@@ -417,6 +437,15 @@ def afficher_kpis(df: pd.DataFrame):
             st.metric("🔋 Batterie", "N/A")
 
     with col4:
+        if last_tilt is True:
+            st.metric("📐 Statut", "ALERTE")
+            st.error("⚠️ RENVERSÉ !")
+        elif last_tilt is False:
+            st.metric("📐 Statut", "Stable", delta="OK", delta_color="normal")
+        else:
+            st.metric("📐 Statut", "N/A")
+
+    with col5:
         timestamp = ligne_kpi.get("Timestamp")
         if pd.notna(timestamp):
             st.metric(
