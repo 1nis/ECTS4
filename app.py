@@ -89,58 +89,58 @@ def recuperer_donnees_api(api_key: str, stream_id: str, limit: int) -> dict:
 def aplatir_donnees(donnees_brutes: list) -> pd.DataFrame:
     """
     Aplatit les données JSON imbriquées en DataFrame Pandas
-
-    Args:
-        donnees_brutes: Liste des enregistrements JSON de l'API
-
-    Returns:
-        DataFrame avec colonnes: Timestamp, Temperature, Latitude, Longitude, Batterie
+    Version robuste qui ignore les erreurs de format
     """
     if not donnees_brutes:
         return pd.DataFrame()
 
     enregistrements = []
+    erreurs_count = 0
 
     for item in donnees_brutes:
         try:
-            # Extraction des données avec gestion des valeurs manquantes
-            # Structure typique Live Objects: item['value']['payload'] ou item['value']
+            # Sécurité 1 : Si l'item lui-même n'est pas un dictionnaire
+            if not isinstance(item, dict):
+                continue
+
             value = item.get("value", {})
+
+            # Sécurité 2 : C'est ici que ça plantait.
+            # Si 'value' est une chaîne (ex: donnée brute non décodée), on l'ignore.
+            if not isinstance(value, dict):
+                erreurs_count += 1
+                continue
 
             # Le payload peut être directement dans value ou dans value['payload']
             payload = value.get("payload", value)
+            if not isinstance(payload, dict):
+                payload = {} # Sécurité supplémentaire
 
             # Extraction du timestamp
             timestamp_str = item.get("timestamp") or item.get("created")
             if timestamp_str:
-                # Conversion du timestamp ISO en datetime
                 timestamp = pd.to_datetime(timestamp_str)
             else:
                 timestamp = pd.NaT
 
             # Extraction des coordonnées GPS
-            # Plusieurs formats possibles selon la configuration du device
             latitude = None
             longitude = None
 
-            # Format 1: Directement dans le payload
+            # Recherche des coordonnées dans les différents formats possibles
             if "latitude" in payload:
                 latitude = payload.get("latitude")
                 longitude = payload.get("longitude")
-            # Format 2: Dans un objet location/gps
             elif "location" in payload:
                 loc = payload.get("location", {})
-                latitude = loc.get("lat") or loc.get("latitude")
-                longitude = loc.get("lon") or loc.get("lng") or loc.get("longitude")
+                if isinstance(loc, dict):
+                    latitude = loc.get("lat") or loc.get("latitude")
+                    longitude = loc.get("lon") or loc.get("lng") or loc.get("longitude")
             elif "gps" in payload:
                 gps = payload.get("gps", {})
-                latitude = gps.get("lat") or gps.get("latitude")
-                longitude = gps.get("lon") or gps.get("lng") or gps.get("longitude")
-            # Format 3: Dans metadata.location
-            elif "metadata" in item:
-                loc = item.get("metadata", {}).get("location", {})
-                latitude = loc.get("lat") or loc.get("latitude")
-                longitude = loc.get("lon") or loc.get("longitude")
+                if isinstance(gps, dict):
+                    latitude = gps.get("lat") or gps.get("latitude")
+                    longitude = gps.get("lon") or gps.get("lng") or gps.get("longitude")
 
             # Extraction de la température
             temperature = (
@@ -166,10 +166,13 @@ def aplatir_donnees(donnees_brutes: list) -> pd.DataFrame:
                 "Batterie": batterie
             })
 
-        except Exception as e:
-            # Log de l'erreur sans bloquer le traitement
-            st.warning(f"Erreur lors du parsing d'un enregistrement: {e}")
+        except Exception:
+            # On ignore silencieusement les erreurs individuelles pour ne pas bloquer l'affichage
             continue
+
+    # Notification discrète si des données brutes ont été ignorées
+    if erreurs_count > 0:
+        st.toast(f"Note : {erreurs_count} messages non décodés ont été ignorés.", icon="ℹ️")
 
     # Création du DataFrame
     df = pd.DataFrame(enregistrements)
@@ -179,12 +182,11 @@ def aplatir_donnees(donnees_brutes: list) -> pd.DataFrame:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    # Tri par timestamp décroissant (plus récent en premier)
+    # Tri par timestamp décroissant
     if "Timestamp" in df.columns and not df.empty:
         df = df.sort_values("Timestamp", ascending=False).reset_index(drop=True)
 
     return df
-
 
 # =============================================================================
 # COMPOSANTS D'INTERFACE UTILISATEUR
