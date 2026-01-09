@@ -51,6 +51,86 @@ def charger_configuration():
 
 
 # =============================================================================
+# DÉCODAGE PAYLOAD MILESIGHT/IPSO
+# =============================================================================
+def decoder_payload_milesight(payload_hex: str) -> dict:
+    """
+    Décode un payload hexadécimal Milesight/IPSO pour AT101
+
+    Format des channels:
+    - 0x01: Batterie (1 byte, valeur brute en %)
+    - 0x67: Température (2 bytes, little endian, signed, /10 pour °C)
+    - 0x88: GPS (8 bytes: lat 4B + lon 4B, signed little endian, /1000000)
+
+    Args:
+        payload_hex: Chaîne hexadécimale (ex: "0700010488ffffffffffffffff32")
+
+    Returns:
+        dict avec keys: battery, temperature, latitude, longitude
+    """
+    result = {
+        "battery": None,
+        "temperature": None,
+        "latitude": None,
+        "longitude": None
+    }
+
+    if not payload_hex or not isinstance(payload_hex, str):
+        return result
+
+    try:
+        # Nettoyer la chaîne hex (supprimer espaces, 0x, etc.)
+        payload_hex = payload_hex.replace(" ", "").replace("0x", "").lower()
+        data = bytes.fromhex(payload_hex)
+        i = 0
+
+        while i < len(data):
+            channel = data[i]
+
+            if channel == 0x01:
+                # Batterie: 1 byte après le channel
+                if i + 1 < len(data):
+                    result["battery"] = data[i + 1]
+                    i += 2
+                else:
+                    i += 1
+
+            elif channel == 0x67:
+                # Température: 2 bytes après le channel, little endian, signed, /10
+                if i + 2 < len(data):
+                    temp_raw = int.from_bytes(data[i + 1:i + 3], byteorder='little', signed=True)
+                    result["temperature"] = temp_raw / 10.0
+                    i += 3
+                else:
+                    i += 1
+
+            elif channel == 0x88:
+                # GPS: 8 bytes après le channel (lat 4B + lon 4B)
+                if i + 8 < len(data):
+                    lat_raw = int.from_bytes(data[i + 1:i + 5], byteorder='little', signed=True)
+                    lon_raw = int.from_bytes(data[i + 5:i + 9], byteorder='little', signed=True)
+
+                    # Vérifier "No Fix" (0xFFFFFFFF = -1 en signed 32 bits)
+                    if lat_raw != -1 and lon_raw != -1:
+                        result["latitude"] = lat_raw / 1000000.0
+                        result["longitude"] = lon_raw / 1000000.0
+                    # Sinon, on laisse None (pas de position valide)
+
+                    i += 9
+                else:
+                    i += 1
+            else:
+                # Channel inconnu, passer au byte suivant
+                i += 1
+
+    except (ValueError, IndexError):
+        # Erreur de décodage, retourner les valeurs par défaut
+        pass
+
+    return result
+
+
+# =============================================================================
 # FONCTIONS DE RÉCUPÉRATION DES DONNÉES
 # =============================================================================
 @st.cache_data(ttl=60)  # Cache de 60 secondes pour éviter les appels excessifs
@@ -89,13 +169,13 @@ def recuperer_donnees_api(api_key: str, stream_id: str, limit: int) -> dict:
 def aplatir_donnees(donnees_brutes: list) -> pd.DataFrame:
     """
     Aplatit les données JSON imbriquées en DataFrame Pandas
-    Version robuste qui ignore les erreurs de format
+    Version robuste avec décodage local des payloads Milesight hex
     """
     if not donnees_brutes:
         return pd.DataFrame()
 
     enregistrements = []
-    erreurs_count = 0
+    payloads_decodes = 0
 
     for item in donnees_brutes:
         try:
@@ -105,17 +185,6 @@ def aplatir_donnees(donnees_brutes: list) -> pd.DataFrame:
 
             value = item.get("value", {})
 
-            # Sécurité 2 : C'est ici que ça plantait.
-            # Si 'value' est une chaîne (ex: donnée brute non décodée), on l'ignore.
-            if not isinstance(value, dict):
-                erreurs_count += 1
-                continue
-
-            # Le payload peut être directement dans value ou dans value['payload']
-            payload = value.get("payload", value)
-            if not isinstance(payload, dict):
-                payload = {} # Sécurité supplémentaire
-
             # Extraction du timestamp
             timestamp_str = item.get("timestamp") or item.get("created")
             if timestamp_str:
@@ -123,40 +192,69 @@ def aplatir_donnees(donnees_brutes: list) -> pd.DataFrame:
             else:
                 timestamp = pd.NaT
 
-            # Extraction des coordonnées GPS
+            # Variables pour stocker les données extraites
             latitude = None
             longitude = None
+            temperature = None
+            batterie = None
 
-            # Recherche des coordonnées dans les différents formats possibles
-            if "latitude" in payload:
-                latitude = payload.get("latitude")
-                longitude = payload.get("longitude")
-            elif "location" in payload:
-                loc = payload.get("location", {})
-                if isinstance(loc, dict):
-                    latitude = loc.get("lat") or loc.get("latitude")
-                    longitude = loc.get("lon") or loc.get("lng") or loc.get("longitude")
-            elif "gps" in payload:
-                gps = payload.get("gps", {})
-                if isinstance(gps, dict):
-                    latitude = gps.get("lat") or gps.get("latitude")
-                    longitude = gps.get("lon") or gps.get("lng") or gps.get("longitude")
+            # CAS 1: Payload brut hexadécimal (chaîne non décodée par le serveur)
+            if isinstance(value, str):
+                # Tenter le décodage Milesight
+                decoded = decoder_payload_milesight(value)
+                latitude = decoded["latitude"]
+                longitude = decoded["longitude"]
+                temperature = decoded["temperature"]
+                batterie = decoded["battery"]
+                if any(v is not None for v in decoded.values()):
+                    payloads_decodes += 1
 
-            # Extraction de la température
-            temperature = (
-                payload.get("temperature") or
-                payload.get("temp") or
-                payload.get("Temperature")
-            )
+            # CAS 2: value est un dict, mais payload peut être une chaîne hex
+            elif isinstance(value, dict):
+                payload = value.get("payload", value)
 
-            # Extraction du niveau de batterie
-            batterie = (
-                payload.get("battery") or
-                payload.get("batterie") or
-                payload.get("Battery") or
-                payload.get("battery_level") or
-                payload.get("bat")
-            )
+                # Si le payload est une chaîne hex, décoder
+                if isinstance(payload, str):
+                    decoded = decoder_payload_milesight(payload)
+                    latitude = decoded["latitude"]
+                    longitude = decoded["longitude"]
+                    temperature = decoded["temperature"]
+                    batterie = decoded["battery"]
+                    if any(v is not None for v in decoded.values()):
+                        payloads_decodes += 1
+
+                # Sinon, extraire depuis le JSON déjà décodé
+                elif isinstance(payload, dict):
+                    # Extraction des coordonnées GPS
+                    if "latitude" in payload:
+                        latitude = payload.get("latitude")
+                        longitude = payload.get("longitude")
+                    elif "location" in payload:
+                        loc = payload.get("location", {})
+                        if isinstance(loc, dict):
+                            latitude = loc.get("lat") or loc.get("latitude")
+                            longitude = loc.get("lon") or loc.get("lng") or loc.get("longitude")
+                    elif "gps" in payload:
+                        gps = payload.get("gps", {})
+                        if isinstance(gps, dict):
+                            latitude = gps.get("lat") or gps.get("latitude")
+                            longitude = gps.get("lon") or gps.get("lng") or gps.get("longitude")
+
+                    # Extraction de la température
+                    temperature = (
+                        payload.get("temperature") or
+                        payload.get("temp") or
+                        payload.get("Temperature")
+                    )
+
+                    # Extraction du niveau de batterie
+                    batterie = (
+                        payload.get("battery") or
+                        payload.get("batterie") or
+                        payload.get("Battery") or
+                        payload.get("battery_level") or
+                        payload.get("bat")
+                    )
 
             enregistrements.append({
                 "Timestamp": timestamp,
@@ -170,9 +268,9 @@ def aplatir_donnees(donnees_brutes: list) -> pd.DataFrame:
             # On ignore silencieusement les erreurs individuelles pour ne pas bloquer l'affichage
             continue
 
-    # Notification discrète si des données brutes ont été ignorées
-    if erreurs_count > 0:
-        st.toast(f"Note : {erreurs_count} messages non décodés ont été ignorés.", icon="ℹ️")
+    # Notification si des payloads hex ont été décodés localement
+    if payloads_decodes > 0:
+        st.toast(f"{payloads_decodes} payloads hex décodés localement.", icon="✅")
 
     # Création du DataFrame
     df = pd.DataFrame(enregistrements)
