@@ -328,6 +328,7 @@ def afficher_erreur_configuration(variables_manquantes: list):
 def afficher_kpis(df: pd.DataFrame):
     """
     Affiche les KPIs en haut de page
+    Utilise la dernière ligne complète (ou avec max 1 donnée manquante)
     """
     st.markdown("### 📊 Indicateurs en temps réel")
 
@@ -344,31 +345,52 @@ def afficher_kpis(df: pd.DataFrame):
             st.metric("Dernière MAJ", "N/A")
         return
 
-    # Dernière position
-    derniere_ligne = df.iloc[0]
+    # Recherche de la dernière ligne complète ou quasi-complète
+    # Colonnes à vérifier (GPS compte comme 1 car lat/lon vont ensemble)
+    colonnes_kpi = ["Temperature", "Batterie"]
 
+    # Compter les valeurs manquantes par ligne
+    df_work = df.copy()
+    df_work["_gps_valid"] = df_work["Latitude"].notna() & df_work["Longitude"].notna()
+    df_work["_temp_valid"] = df_work["Temperature"].notna()
+    df_work["_bat_valid"] = df_work["Batterie"].notna()
+    df_work["_nb_valides"] = df_work["_gps_valid"].astype(int) + df_work["_temp_valid"].astype(int) + df_work["_bat_valid"].astype(int)
+
+    # Chercher la première ligne avec 3 valeurs valides (complète)
+    df_complet = df_work[df_work["_nb_valides"] == 3]
+    if not df_complet.empty:
+        ligne_kpi = df_complet.iloc[0]
+    else:
+        # Sinon, chercher la première ligne avec 2 valeurs valides (1 manquante max)
+        df_quasi = df_work[df_work["_nb_valides"] >= 2]
+        if not df_quasi.empty:
+            ligne_kpi = df_quasi.iloc[0]
+        else:
+            # Fallback : première ligne disponible
+            ligne_kpi = df.iloc[0]
+
+    # Affichage des KPIs depuis la ligne sélectionnée
     with col1:
-        lat = derniere_ligne.get("Latitude")
-        lon = derniere_ligne.get("Longitude")
+        lat = ligne_kpi.get("Latitude")
+        lon = ligne_kpi.get("Longitude")
         if pd.notna(lat) and pd.notna(lon):
             st.metric(
                 "📍 Dernière position",
                 f"{lat:.5f}, {lon:.5f}"
             )
         else:
-            st.metric("📍 Dernière position", "Non disponible")
+            st.metric("📍 Dernière position", "N/A")
 
     with col2:
-        temp = derniere_ligne.get("Temperature")
+        temp = ligne_kpi.get("Temperature")
         if pd.notna(temp):
             st.metric("🌡️ Température", f"{temp:.1f} °C")
         else:
             st.metric("🌡️ Température", "N/A")
 
     with col3:
-        batterie = derniere_ligne.get("Batterie")
+        batterie = ligne_kpi.get("Batterie")
         if pd.notna(batterie):
-            # Alerte couleur si batterie < 20%
             if batterie < 20:
                 st.metric(
                     "🔋 Batterie",
@@ -395,7 +417,7 @@ def afficher_kpis(df: pd.DataFrame):
             st.metric("🔋 Batterie", "N/A")
 
     with col4:
-        timestamp = derniere_ligne.get("Timestamp")
+        timestamp = ligne_kpi.get("Timestamp")
         if pd.notna(timestamp):
             st.metric(
                 "🕐 Dernière MAJ",
