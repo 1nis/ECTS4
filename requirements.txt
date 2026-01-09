@@ -1,0 +1,17 @@
+# =============================================================================
+# Dépendances du Dashboard GPS - Milesight AT101
+# =============================================================================
+# Installation: pip install -r requirements.txt
+# =============================================================================
+
+# Framework web pour le dashboard
+streamlit>=1.28.0
+
+# Manipulation des données
+pandas>=2.0.0
+
+# Requêtes HTTP vers l'API
+requests>=2.31.0
+
+# Chargement des variables d'environnement
+python-dotenv>=1.0.0
