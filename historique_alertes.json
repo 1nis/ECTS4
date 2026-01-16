@@ -1,0 +1,1002 @@
+[
+  {
+    "timestamp": "16/01/2026 15:38:11",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:37:11"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:23:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:14:10"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:23:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:12:10"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:23:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:10:33"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:23:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:09:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:23:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:05:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:23:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:59:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:23:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:57:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:23:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:55:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:23:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:51:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:23:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:49:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:23:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:47:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:23:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:45:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:23:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:43:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:23:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:41:22"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:23:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:39:26"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:23:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:37:38"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:23:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 08:55:04"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:23:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 08:52:03"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:23:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 08:49:32"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:23:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 08:46:01"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:23:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 08:43:01"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:14:10"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:12:10"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:10:33"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:09:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:05:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:59:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:57:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:55:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:51:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:49:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:47:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:45:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:43:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:41:22"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:39:26"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:37:38"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 08:55:04"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 08:52:03"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 08:49:32"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 08:46:01"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 08:43:01"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:14:10"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:12:10"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:10:33"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:09:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:05:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:59:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:57:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:55:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:51:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:49:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:47:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:45:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:43:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:41:22"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:39:26"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:37:38"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:32",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 08:55:04"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:31",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 08:52:03"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:31",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 08:49:32"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:31",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 08:46:01"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:22:31",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 08:43:01"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:14:10"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:12:10"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:10:33"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:09:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:05:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:59:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:57:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:55:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:51:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:49:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:47:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:45:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:43:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:41:22"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:39:26"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:37:38"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 08:55:04"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 08:52:03"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 08:49:32"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 08:46:01"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:34",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 08:43:01"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:05",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:14:10"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:05",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:12:10"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:05",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:10:33"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:05",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:09:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:05",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 15:05:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:05",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:59:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:05",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:57:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:05",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:55:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:05",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:51:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:05",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:49:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:05",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:47:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:05",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:45:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:05",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:43:23"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:05",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:41:22"
+    }
+  },
+  {
+    "timestamp": "16/01/2026 15:21:05",
+    "type": "RENVERSEMENT",
+    "appareil": "urn:lo:nsid:lora:24E124745E033174",
+    "details": {
+      "latitude": NaN,
+      "longitude": NaN,
+      "timestamp_point": "16/01/2026 14:39:26"
+    }
+  }
+]

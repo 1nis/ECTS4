@@ -18,3 +18,7 @@ python-dotenv>=1.0.0
 
 # Rafraîchissement automatique du dashboard
 streamlit-autorefresh>=1.0.1
+
+# Carte interactive
+folium>=0.15.0
+streamlit-folium>=0.15.0

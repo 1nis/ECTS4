@@ -4,7 +4,8 @@
       "Bash(streamlit run:*)",
       "Bash(timeout:*)",
       "Bash(ping:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(python:*)"
     ]
   }
 }

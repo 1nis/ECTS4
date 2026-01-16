@@ -1,660 +1,603 @@
 # -*- coding: utf-8 -*-
 """
-Dashboard de visualisation GPS - Milesight AT101
-Connexion à l'API Orange Live Objects
+Carte interactive GPS - Milesight AT101
+Surveillance de zone avec alertes
 
 Auteur: Dashboard IoT
-Date: 2026-01-09
+Date: 2026-01-16
 """
 
 import os
+import json
+import math
 import streamlit as st
 import pandas as pd
 import requests
+import folium
+from streamlit_folium import st_folium
 from datetime import datetime
 from dotenv import load_dotenv
 from streamlit_autorefresh import st_autorefresh
+from pathlib import Path
 
 # =============================================================================
 # CONFIGURATION DE LA PAGE STREAMLIT
 # =============================================================================
 st.set_page_config(
-    page_title="Dashboard GPS AT101",
-    page_icon="🛰️",
+    page_title="Surveillance GPS Bouées",
+    page_icon="🗺️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
+# Fichiers de stockage
+FICHIER_REFERENCES = Path(__file__).parent / "positions_reference.json"
+FICHIER_ALERTES = Path(__file__).parent / "historique_alertes.json"
+RAYON_SECURITE = 500
+
 # =============================================================================
-# CHARGEMENT DES VARIABLES D'ENVIRONNEMENT
+# CSS MINIMALISTE
+# =============================================================================
+st.markdown("""
+<style>
+    /* Réduire les marges */
+    .block-container {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+
+    /* Header personnalisé */
+    .custom-header {
+        background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);
+        padding: 15px 25px;
+        margin: -1rem -1rem 1rem -1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: white;
+    }
+    .header-title {
+        font-size: 22px;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: white;
+    }
+    .header-status {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        font-size: 13px;
+        color: rgba(255,255,255,0.8);
+    }
+    .status-badge {
+        background: rgba(76, 175, 80, 0.3);
+        border: 1px solid #4caf50;
+        padding: 4px 12px;
+        border-radius: 15px;
+        color: #a5d6a7;
+    }
+
+    /* Tabs styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background: #e8eaf6;
+        padding: 5px;
+        border-radius: 10px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        padding: 10px 25px;
+        border-radius: 8px;
+        font-weight: 500;
+        color: #1a237e;
+    }
+    .stTabs [aria-selected="true"] {
+        background: #1a237e !important;
+        color: white !important;
+    }
+
+    /* Légende */
+    .legend-container {
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    .legend-title {
+        font-weight: 600;
+        font-size: 14px;
+        color: #333;
+        margin-bottom: 12px;
+    }
+    .legend-items {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: #333;
+    }
+    .legend-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    .legend-circle {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 2px dashed #3498db;
+        background: transparent;
+        flex-shrink: 0;
+    }
+
+    /* Stats cards */
+    .stats-row {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    .stat-card {
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 15px 20px;
+        flex: 1;
+        text-align: center;
+    }
+    .stat-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1a237e;
+    }
+    .stat-value.alert {
+        color: #e74c3c;
+    }
+    .stat-label {
+        font-size: 12px;
+        color: #555;
+        text-transform: uppercase;
+        margin-top: 5px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+
+# =============================================================================
+# FONCTIONS UTILITAIRES
 # =============================================================================
 def charger_configuration():
-    """
-    Charge les variables d'environnement depuis le fichier .env
-    Retourne un tuple (api_key, stream_id, erreur)
-    """
     load_dotenv()
-
     api_key = os.getenv("API_KEY")
     stream_id = os.getenv("STREAM_ID")
-
     erreurs = []
-
     if not api_key:
         erreurs.append("API_KEY")
     if not stream_id:
         erreurs.append("STREAM_ID")
-
     if erreurs:
         return None, None, erreurs
-
     return api_key, stream_id, None
 
 
-# =============================================================================
-# DÉCODAGE PAYLOAD MILESIGHT/IPSO
-# =============================================================================
-def decoder_payload_milesight(payload_hex: str) -> dict:
-    """
-    Décode un payload hexadécimal Milesight/IPSO pour AT101
-    Structure : [CHANNEL_ID] [CHANNEL_TYPE] [DATA]
-    """
-    result = {
-        "battery": None,
-        "temperature": None,
-        "latitude": None,
-        "longitude": None,
-        "tilt_alert": None
-    }
+def calculer_distance_haversine(lat1, lon1, lat2, lon2):
+    R = 6371000
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lon2 - lon1)
+    a = math.sin(delta_phi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
+
+def charger_positions_reference():
+    if FICHIER_REFERENCES.exists():
+        try:
+            with open(FICHIER_REFERENCES, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            return {}
+    return {}
+
+
+def sauvegarder_positions_reference(positions):
+    with open(FICHIER_REFERENCES, "w", encoding="utf-8") as f:
+        json.dump(positions, f, indent=2, ensure_ascii=False)
+
+
+def charger_historique_alertes():
+    if FICHIER_ALERTES.exists():
+        try:
+            with open(FICHIER_ALERTES, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            return []
+    return []
+
+
+def sauvegarder_historique_alertes(alertes):
+    with open(FICHIER_ALERTES, "w", encoding="utf-8") as f:
+        json.dump(alertes, f, indent=2, ensure_ascii=False, default=str)
+
+
+def ajouter_alerte(alertes, type_alerte, appareil, details):
+    alerte = {
+        "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+        "type": type_alerte,
+        "appareil": appareil,
+        "details": details
+    }
+    alertes.insert(0, alerte)
+    if len(alertes) > 100:
+        alertes = alertes[:100]
+    sauvegarder_historique_alertes(alertes)
+    return alertes
+
+
+# =============================================================================
+# DÉCODAGE PAYLOAD
+# =============================================================================
+def decoder_payload_milesight(payload_hex):
+    result = {"battery": None, "temperature": None, "latitude": None, "longitude": None, "tilt_alert": None}
     if not payload_hex or not isinstance(payload_hex, str):
         return result
-
     try:
-        # Nettoyage
         payload_hex = payload_hex.replace(" ", "").replace("0x", "").lower()
         data = bytes.fromhex(payload_hex)
         i = 0
-
         while i < len(data):
-            # Sécurité pour lire ID et TYPE
-            if i + 2 > len(data): break
-
-            channel_id = data[i]
-            channel_type = data[i + 1]
+            if i + 2 > len(data):
+                break
+            channel_id, channel_type = data[i], data[i + 1]
             i += 2
-
-            # --- BATTERIE (Type 0x01 ou 0x75) ---
-            # Le AT101 envoie parfois ID=01 Type=75 (Battery Level)
             if channel_type == 0x75 or (channel_id == 0x01 and channel_type == 0x01):
                 if i + 1 <= len(data):
                     result["battery"] = data[i]
                     i += 1
-
-            # --- TEMPERATURE (Type 0x67) ---
             elif channel_type == 0x67:
                 if i + 2 <= len(data):
-                    temp_raw = int.from_bytes(data[i:i + 2], byteorder='little', signed=True)
-                    result["temperature"] = temp_raw / 10.0
+                    result["temperature"] = int.from_bytes(data[i:i + 2], 'little', signed=True) / 10.0
                     i += 2
-
-            # --- GPS (Type 0x88) ---
             elif channel_type == 0x88:
                 if i + 8 <= len(data):
-                    lat_raw = int.from_bytes(data[i:i + 4], byteorder='little', signed=True)
-                    lon_raw = int.from_bytes(data[i + 4:i + 8], byteorder='little', signed=True)
-
-                    # Filtre les erreurs (FFFF...) et valeurs hors limites
+                    lat_raw = int.from_bytes(data[i:i + 4], 'little', signed=True)
+                    lon_raw = int.from_bytes(data[i + 4:i + 8], 'little', signed=True)
                     if lat_raw != -1 and lon_raw != -1:
-                        lat_val = lat_raw / 1000000.0
-                        lon_val = lon_raw / 1000000.0
+                        lat_val, lon_val = lat_raw / 1000000.0, lon_raw / 1000000.0
                         if -90 <= lat_val <= 90 and -180 <= lon_val <= 180:
-                            result["latitude"] = lat_val
-                            result["longitude"] = lon_val
+                            result["latitude"], result["longitude"] = lat_val, lon_val
                     i += 8
-
-            # --- TILT ALERT / DEFLECTION ANGLE (Channel 0x05, Type 0x00) ---
             elif channel_id == 0x05 and channel_type == 0x00:
                 if i + 1 <= len(data):
                     result["tilt_alert"] = (data[i] == 1)
                     i += 1
-
-            # --- Inconnu ---
             else:
-                break # On arrête pour éviter de lire n'importe quoi
-
-    except Exception:
+                break
+    except:
         pass
-
     return result
 
-# =============================================================================
-# FONCTIONS DE RÉCUPÉRATION DES DONNÉES
-# =============================================================================
-@st.cache_data(ttl=60)  # Cache de 60 secondes pour éviter les appels excessifs
-def recuperer_donnees_api(api_key: str, stream_id: str, limit: int) -> dict:
-    """
-    Récupère les données depuis l'API Orange Live Objects
 
-    Args:
-        api_key: Clé API pour l'authentification
-        stream_id: Identifiant du flux de données
-        limit: Nombre maximum de points à récupérer
-
-    Returns:
-        dict: Données JSON de l'API ou None en cas d'erreur
-    """
+# =============================================================================
+# RÉCUPÉRATION DES DONNÉES
+# =============================================================================
+@st.cache_data(ttl=60)
+def recuperer_donnees_api(api_key, stream_id, limit):
     url = f"https://liveobjects.orange-business.com/api/v0/data/streams/{stream_id}"
-
-    headers = {
-        "X-API-KEY": api_key,
-        "Accept": "application/json"
-    }
-
-    params = {
-        "limit": limit
-    }
-
     try:
-        response = requests.get(url, headers=headers, params=params, timeout=30)
+        response = requests.get(url, headers={"X-API-KEY": api_key}, params={"limit": limit}, timeout=30)
         response.raise_for_status()
         return response.json()
-    except requests.exceptions.RequestException as e:
-        st.error(f"Erreur de connexion à l'API: {str(e)}")
+    except:
         return None
 
 
-def aplatir_donnees(donnees_brutes: list) -> pd.DataFrame:
-    """
-    Aplatit les données JSON imbriquées en DataFrame Pandas
-    Version robuste avec décodage local des payloads Milesight hex
-    ET correction du fuseau horaire (UTC -> Paris)
-    """
+def aplatir_donnees(donnees_brutes, stream_id):
     if not donnees_brutes:
         return pd.DataFrame()
-
     enregistrements = []
-    payloads_decodes = 0
-
     for item in donnees_brutes:
         try:
-            # Sécurité 1 : Si l'item lui-même n'est pas un dictionnaire
             if not isinstance(item, dict):
                 continue
-
             value = item.get("value", {})
+            appareil_id = item.get("streamId", stream_id)
+            timestamp = pd.to_datetime(item.get("timestamp") or item.get("created"))
+            lat, lon, temp, bat, tilt = None, None, None, None, None
 
-            # Extraction du timestamp
-            timestamp_str = item.get("timestamp") or item.get("created")
-            if timestamp_str:
-                timestamp = pd.to_datetime(timestamp_str)
-            else:
-                timestamp = pd.NaT
-
-            # Variables pour stocker les données extraites
-            latitude = None
-            longitude = None
-            temperature = None
-            batterie = None
-            tilt_alert = None
-
-            # CAS 1: Payload brut hexadécimal (chaîne non décodée par le serveur)
             if isinstance(value, str):
-                # Tenter le décodage Milesight
-                decoded = decoder_payload_milesight(value)
-                latitude = decoded["latitude"]
-                longitude = decoded["longitude"]
-                temperature = decoded["temperature"]
-                batterie = decoded["battery"]
-                tilt_alert = decoded["tilt_alert"]
-                if any(v is not None for v in decoded.values()):
-                    payloads_decodes += 1
-
-            # CAS 2: value est un dict, mais payload peut être une chaîne hex
+                d = decoder_payload_milesight(value)
+                lat, lon, temp, bat, tilt = d["latitude"], d["longitude"], d["temperature"], d["battery"], d["tilt_alert"]
             elif isinstance(value, dict):
                 payload = value.get("payload", value)
-
-                # Si le payload est une chaîne hex, décoder
                 if isinstance(payload, str):
-                    decoded = decoder_payload_milesight(payload)
-                    latitude = decoded["latitude"]
-                    longitude = decoded["longitude"]
-                    temperature = decoded["temperature"]
-                    batterie = decoded["battery"]
-                    tilt_alert = decoded["tilt_alert"]
-                    if any(v is not None for v in decoded.values()):
-                        payloads_decodes += 1
-
-                # Sinon, extraire depuis le JSON déjà décodé
+                    d = decoder_payload_milesight(payload)
+                    lat, lon, temp, bat, tilt = d["latitude"], d["longitude"], d["temperature"], d["battery"], d["tilt_alert"]
                 elif isinstance(payload, dict):
-                    # Extraction des coordonnées GPS
-                    if "latitude" in payload:
-                        latitude = payload.get("latitude")
-                        longitude = payload.get("longitude")
-                    elif "location" in payload:
-                        loc = payload.get("location", {})
-                        if isinstance(loc, dict):
-                            latitude = loc.get("lat") or loc.get("latitude")
-                            longitude = loc.get("lon") or loc.get("lng") or loc.get("longitude")
-                    elif "gps" in payload:
-                        gps = payload.get("gps", {})
-                        if isinstance(gps, dict):
-                            latitude = gps.get("lat") or gps.get("latitude")
-                            longitude = gps.get("lon") or gps.get("lng") or gps.get("longitude")
+                    lat, lon = payload.get("latitude"), payload.get("longitude")
+                    temp = payload.get("temperature") or payload.get("temp")
+                    bat = payload.get("battery") or payload.get("batterie")
+                    tilt = payload.get("tilt_alert")
 
-                    # Extraction de la température
-                    temperature = (
-                        payload.get("temperature") or
-                        payload.get("temp") or
-                        payload.get("Temperature")
-                    )
-
-                    # Extraction du niveau de batterie
-                    batterie = (
-                        payload.get("battery") or
-                        payload.get("batterie") or
-                        payload.get("Battery") or
-                        payload.get("battery_level") or
-                        payload.get("bat")
-                    )
-
-                    # Extraction de l'alerte de basculement
-                    tilt_alert = payload.get("tilt_alert") or payload.get("deflection")
-
-            enregistrements.append({
-                "Timestamp": timestamp,
-                "Temperature": temperature,
-                "Latitude": latitude,
-                "Longitude": longitude,
-                "Batterie": batterie,
-                "Tilt_Alert": tilt_alert
-            })
-
-        except Exception:
-            # On ignore silencieusement les erreurs individuelles pour ne pas bloquer l'affichage
+            enregistrements.append({"Appareil": appareil_id, "Timestamp": timestamp, "Temperature": temp,
+                                    "Latitude": lat, "Longitude": lon, "Batterie": bat, "Tilt_Alert": tilt})
+        except:
             continue
 
-    # Notification si des payloads hex ont été décodés localement
-    if payloads_decodes > 0:
-        st.toast(f"{payloads_decodes} payloads hex décodés localement.", icon="✅")
-
-    # Création du DataFrame
     df = pd.DataFrame(enregistrements)
-
-    # Conversion des types de données numériques
     for col in ["Temperature", "Latitude", "Longitude", "Batterie"]:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
-
-    # --- CORRECTION DU FUSEAU HORAIRE (Ajouté) ---
     if "Timestamp" in df.columns and not df.empty:
-        # S'assurer que c'est bien un format datetime
         df["Timestamp"] = pd.to_datetime(df["Timestamp"])
-        
-        # Si la date n'a pas de fuseau (naive), on considère que c'est UTC (car Live Objects envoie en UTC)
         if df["Timestamp"].dt.tz is None:
             df["Timestamp"] = df["Timestamp"].dt.tz_localize("UTC")
-        
-        # Conversion vers le fuseau horaire de Paris
         try:
             df["Timestamp"] = df["Timestamp"].dt.tz_convert("Europe/Paris")
-        except Exception:
-            # Fallback simple : ajout manuel d'une heure si la librairie tzdata manque
+        except:
             df["Timestamp"] = df["Timestamp"] + pd.Timedelta(hours=1)
-
-    # Tri par timestamp décroissant (le plus récent en premier)
-    if "Timestamp" in df.columns and not df.empty:
-        df = df.sort_values("Timestamp", ascending=False).reset_index(drop=True)
-
+        df = df.sort_values("Timestamp", ascending=True).reset_index(drop=True)
     return df
 
+
+def definir_position_reference(df, positions_ref):
+    df_gps = df.dropna(subset=["Latitude", "Longitude", "Appareil"])
+    if df_gps.empty:
+        return positions_ref
+    modifie = False
+    for appareil in df_gps["Appareil"].unique():
+        if appareil not in positions_ref:
+            df_app = df_gps[df_gps["Appareil"] == appareil].sort_values("Timestamp")
+            if not df_app.empty:
+                p = df_app.iloc[0]
+                positions_ref[appareil] = {
+                    "latitude": float(p["Latitude"]), "longitude": float(p["Longitude"]),
+                    "date_reference": p["Timestamp"].strftime("%d/%m/%Y %H:%M:%S")
+                }
+                modifie = True
+    if modifie:
+        sauvegarder_positions_reference(positions_ref)
+    return positions_ref
+
+
+def verifier_sorties_zone(df, positions_ref, alertes):
+    df = df.copy()
+    df["Hors_Zone"], df["Distance_Reference"] = False, None
+
+    alertes_existantes = {f"{a['appareil']}_{a['details'].get('latitude')}_{a['details'].get('longitude')}"
+                         for a in alertes if a["type"] == "SORTIE_ZONE"}
+    alertes_tilt = {f"TILT_{a['appareil']}_{a['details'].get('timestamp_point')}"
+                   for a in alertes if a["type"] == "RENVERSEMENT"}
+
+    for idx, row in df.dropna(subset=["Latitude", "Longitude", "Appareil"]).iterrows():
+        appareil = row["Appareil"]
+        if appareil in positions_ref:
+            ref = positions_ref[appareil]
+            distance = calculer_distance_haversine(ref["latitude"], ref["longitude"], row["Latitude"], row["Longitude"])
+            df.at[idx, "Distance_Reference"] = distance
+            if distance > RAYON_SECURITE:
+                df.at[idx, "Hors_Zone"] = True
+                key = f"{appareil}_{row['Latitude']}_{row['Longitude']}"
+                if key not in alertes_existantes:
+                    ts_str = row["Timestamp"].strftime("%d/%m/%Y %H:%M:%S") if pd.notna(row["Timestamp"]) else "N/A"
+                    alertes = ajouter_alerte(alertes, "SORTIE_ZONE", appareil,
+                                            {"latitude": row["Latitude"], "longitude": row["Longitude"],
+                                             "distance": round(distance, 1), "timestamp_point": ts_str})
+
+    for idx, row in df.iterrows():
+        if row.get("Tilt_Alert") is True:
+            ts_str = row["Timestamp"].strftime("%d/%m/%Y %H:%M:%S") if pd.notna(row.get("Timestamp")) else "N/A"
+            key = f"TILT_{row.get('Appareil')}_{ts_str}"
+            if key not in alertes_tilt:
+                alertes = ajouter_alerte(alertes, "RENVERSEMENT", row.get("Appareil", "Inconnu"),
+                                        {"latitude": row.get("Latitude"), "longitude": row.get("Longitude"),
+                                         "timestamp_point": ts_str})
+    return df, alertes
+
+
 # =============================================================================
-# COMPOSANTS D'INTERFACE UTILISATEUR
+# CARTE FOLIUM
 # =============================================================================
-def afficher_erreur_configuration(variables_manquantes: list):
-    """
-    Affiche un message d'erreur dans la sidebar si la configuration est incorrecte
-    """
-    st.sidebar.error("⚠️ Configuration requise")
-    st.sidebar.markdown("""
-    **Variables d'environnement manquantes:**
-    """)
-    for var in variables_manquantes:
-        st.sidebar.markdown(f"- `{var}`")
-
-    st.sidebar.markdown("""
-    ---
-    **Pour configurer l'application:**
-
-    1. Créez un fichier `.env` à la racine du projet
-    2. Ajoutez les lignes suivantes:
-    ```
-    API_KEY=votre_cle_api_ici
-    STREAM_ID=votre_stream_id_ici
-    ```
-    3. Redémarrez l'application
-    """)
-
-    st.error("🔐 Configuration manquante - Veuillez configurer le fichier .env")
-    st.stop()
-
-
-def afficher_kpis(df: pd.DataFrame):
-    """
-    Affiche les KPIs en haut de page
-    Utilise la dernière ligne complète (ou avec max 1 donnée manquante)
-    """
-    st.markdown("### 📊 Indicateurs en temps réel")
-
-    col1, col2, col3, col4, col5 = st.columns(5)
-
-    if df.empty:
-        with col1:
-            st.metric("Position", "N/A")
-        with col2:
-            st.metric("Température", "N/A")
-        with col3:
-            st.metric("Batterie", "N/A")
-        with col4:
-            st.metric("Statut", "N/A")
-        with col5:
-            st.metric("Dernière MAJ", "N/A")
-        return
-
-    # Recherche de la dernière ligne complète ou quasi-complète
-    # Colonnes à vérifier (GPS compte comme 1 car lat/lon vont ensemble)
-    colonnes_kpi = ["Temperature", "Batterie"]
-
-    # Compter les valeurs manquantes par ligne
-    df_work = df.copy()
-    df_work["_gps_valid"] = df_work["Latitude"].notna() & df_work["Longitude"].notna()
-    df_work["_temp_valid"] = df_work["Temperature"].notna()
-    df_work["_bat_valid"] = df_work["Batterie"].notna()
-    df_work["_nb_valides"] = df_work["_gps_valid"].astype(int) + df_work["_temp_valid"].astype(int) + df_work["_bat_valid"].astype(int)
-
-    # Chercher la première ligne avec 3 valeurs valides (complète)
-    df_complet = df_work[df_work["_nb_valides"] == 3]
-    if not df_complet.empty:
-        ligne_kpi = df_complet.iloc[0]
-    else:
-        # Sinon, chercher la première ligne avec 2 valeurs valides (1 manquante max)
-        df_quasi = df_work[df_work["_nb_valides"] >= 2]
-        if not df_quasi.empty:
-            ligne_kpi = df_quasi.iloc[0]
-        else:
-            # Fallback : première ligne disponible
-            ligne_kpi = df.iloc[0]
-
-    # Recherche de la dernière alerte de basculement connue
-    df_tilt = df.dropna(subset=["Tilt_Alert"]) if "Tilt_Alert" in df.columns else pd.DataFrame()
-    last_tilt = df_tilt.iloc[0]["Tilt_Alert"] if not df_tilt.empty else None
-
-    # Affichage des KPIs depuis la ligne sélectionnée
-    with col1:
-        lat = ligne_kpi.get("Latitude")
-        lon = ligne_kpi.get("Longitude")
-        if pd.notna(lat) and pd.notna(lon):
-            st.metric(
-                "📍 Dernière position",
-                f"{lat:.5f}, {lon:.5f}"
-            )
-        else:
-            st.metric("📍 Dernière position", "N/A")
-
-    with col2:
-        temp = ligne_kpi.get("Temperature")
-        if pd.notna(temp):
-            st.metric("🌡️ Température", f"{temp:.1f} °C")
-        else:
-            st.metric("🌡️ Température", "N/A")
-
-    with col3:
-        batterie = ligne_kpi.get("Batterie")
-        if pd.notna(batterie):
-            if batterie < 20:
-                st.metric(
-                    "🔋 Batterie",
-                    f"{batterie:.0f} %",
-                    delta="FAIBLE",
-                    delta_color="inverse"
-                )
-                st.error("⚠️ Batterie faible!")
-            elif batterie < 50:
-                st.metric(
-                    "🔋 Batterie",
-                    f"{batterie:.0f} %",
-                    delta="Moyenne",
-                    delta_color="off"
-                )
-            else:
-                st.metric(
-                    "🔋 Batterie",
-                    f"{batterie:.0f} %",
-                    delta="OK",
-                    delta_color="normal"
-                )
-        else:
-            st.metric("🔋 Batterie", "N/A")
-
-    with col4:
-        if last_tilt is True:
-            st.metric("📐 Statut", "ALERTE")
-            st.error("⚠️ RENVERSÉ !")
-        elif last_tilt is False:
-            st.metric("📐 Statut", "Stable", delta="OK", delta_color="normal")
-        else:
-            st.metric("📐 Statut", "N/A")
-
-    with col5:
-        timestamp = ligne_kpi.get("Timestamp")
-        if pd.notna(timestamp):
-            st.metric(
-                "🕐 Dernière MAJ",
-                timestamp.strftime("%d/%m/%Y %H:%M")
-            )
-        else:
-            st.metric("🕐 Dernière MAJ", "N/A")
-
-
-def afficher_carte(df: pd.DataFrame):
-    """
-    Affiche une carte interactive avec les positions GPS
-    """
-    st.markdown("### 🗺️ Carte des positions")
-
-    # Filtrer les données avec coordonnées valides
+def creer_carte(df, positions_ref):
     df_carte = df.dropna(subset=["Latitude", "Longitude"]).copy()
 
-    if df_carte.empty:
-        st.warning("Aucune donnée GPS valide à afficher sur la carte.")
-        return
+    # Centre de la carte
+    if positions_ref:
+        lats = [p["latitude"] for p in positions_ref.values()]
+        lons = [p["longitude"] for p in positions_ref.values()]
+        center = [sum(lats) / len(lats), sum(lons) / len(lons)]
+    elif not df_carte.empty:
+        center = [df_carte["Latitude"].mean(), df_carte["Longitude"].mean()]
+    else:
+        center = [46.603354, 1.888334]
 
-    # Renommer les colonnes pour st.map (requiert 'lat' et 'lon' ou 'latitude' et 'longitude')
-    df_carte = df_carte.rename(columns={
-        "Latitude": "lat",
-        "Longitude": "lon"
-    })
+    carte = folium.Map(location=center, zoom_start=15, tiles="CartoDB positron")
 
-    # Affichage de la carte
-    st.map(df_carte[["lat", "lon"]], zoom=12)
+    # Cercles de sûreté et ancres
+    for appareil, ref in positions_ref.items():
+        folium.Circle(
+            location=[ref["latitude"], ref["longitude"]], radius=RAYON_SECURITE,
+            color="#3498db", fill=True, fill_color="#3498db", fill_opacity=0.1,
+            weight=2, dash_array="5, 5"
+        ).add_to(carte)
+        folium.Marker(
+            location=[ref["latitude"], ref["longitude"]],
+            icon=folium.Icon(color="blue", icon="anchor", prefix="fa"),
+            tooltip=f"Référence: {appareil[-12:]}<br>{ref['date_reference']}"
+        ).add_to(carte)
 
-    # Informations supplémentaires
-    st.caption(f"📍 {len(df_carte)} positions affichées sur la carte")
+    # Points GPS
+    for _, row in df_carte.iterrows():
+        lat, lon = row["Latitude"], row["Longitude"]
+        tilt, hors_zone = row.get("Tilt_Alert"), row.get("Hors_Zone", False)
 
+        if hors_zone and tilt:
+            color = "#9b59b6"
+        elif hors_zone:
+            color = "#e74c3c"
+        elif tilt:
+            color = "#f39c12"
+        else:
+            color = "#27ae60"
 
-def afficher_graphique_temperature(df: pd.DataFrame):
-    """
-    Affiche un graphique temporel de la température
-    """
-    st.markdown("### 📈 Évolution de la température")
+        tooltip = []
+        if pd.notna(row.get("Timestamp")):
+            tooltip.append(f"<b>{row['Timestamp'].strftime('%d/%m %H:%M:%S')}</b>")
+        tooltip.append(f"📍 {lat:.5f}, {lon:.5f}")
+        if pd.notna(row.get("Temperature")):
+            tooltip.append(f"🌡️ {row['Temperature']:.1f}°C")
+        if pd.notna(row.get("Batterie")):
+            tooltip.append(f"🔋 {row['Batterie']:.0f}%")
+        if pd.notna(row.get("Distance_Reference")):
+            tooltip.append(f"📏 {row['Distance_Reference']:.0f}m")
 
-    # Filtrer les données avec température valide
-    df_temp = df.dropna(subset=["Timestamp", "Temperature"]).copy()
+        folium.CircleMarker(
+            location=[lat, lon], radius=6, color=color,
+            fill=True, fill_color=color, fill_opacity=0.8, weight=2,
+            tooltip="<br>".join(tooltip)
+        ).add_to(carte)
 
-    if df_temp.empty:
-        st.warning("Aucune donnée de température disponible.")
-        return
+    # Ajuster la vue
+    all_pts = [[ref["latitude"], ref["longitude"]] for ref in positions_ref.values()]
+    all_pts += [[r["Latitude"], r["Longitude"]] for _, r in df_carte.iterrows()]
+    if len(all_pts) > 1:
+        lats, lons = [p[0] for p in all_pts], [p[1] for p in all_pts]
+        carte.fit_bounds([[min(lats), min(lons)], [max(lats), max(lons)]], padding=[30, 30])
 
-    # Trier par timestamp croissant pour le graphique
-    df_temp = df_temp.sort_values("Timestamp", ascending=True)
-
-    # Préparer les données pour le graphique
-    df_chart = df_temp.set_index("Timestamp")[["Temperature"]]
-
-    # Affichage du graphique
-    st.line_chart(df_chart, y="Temperature", use_container_width=True)
-
-    # Statistiques
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Min", f"{df_temp['Temperature'].min():.1f} °C")
-    with col2:
-        st.metric("Moyenne", f"{df_temp['Temperature'].mean():.1f} °C")
-    with col3:
-        st.metric("Max", f"{df_temp['Temperature'].max():.1f} °C")
-
-
-def afficher_tableau_donnees(df: pd.DataFrame):
-    """
-    Affiche un tableau interactif des données brutes
-    """
-    st.markdown("### 📋 Données brutes")
-
-    if df.empty:
-        st.info("Aucune donnée à afficher.")
-        return
-
-    # Formatage du DataFrame pour l'affichage
-    df_affichage = df.copy()
-
-    # Formatage des colonnes
-    if "Timestamp" in df_affichage.columns:
-        df_affichage["Timestamp"] = df_affichage["Timestamp"].dt.strftime("%d/%m/%Y %H:%M:%S")
-
-    if "Temperature" in df_affichage.columns:
-        df_affichage["Temperature"] = df_affichage["Temperature"].apply(
-            lambda x: f"{x:.1f} °C" if pd.notna(x) else "N/A"
-        )
-
-    if "Batterie" in df_affichage.columns:
-        df_affichage["Batterie"] = df_affichage["Batterie"].apply(
-            lambda x: f"{x:.0f} %" if pd.notna(x) else "N/A"
-        )
-
-    if "Latitude" in df_affichage.columns:
-        df_affichage["Latitude"] = df_affichage["Latitude"].apply(
-            lambda x: f"{x:.6f}" if pd.notna(x) else "N/A"
-        )
-
-    if "Longitude" in df_affichage.columns:
-        df_affichage["Longitude"] = df_affichage["Longitude"].apply(
-            lambda x: f"{x:.6f}" if pd.notna(x) else "N/A"
-        )
-
-    # Affichage du tableau interactif
-    st.dataframe(
-        df_affichage,
-        use_container_width=True,
-        hide_index=True
-    )
-
-    st.caption(f"Total: {len(df)} enregistrements")
+    return carte
 
 
 # =============================================================================
-# FONCTION PRINCIPALE
+# MAIN
 # =============================================================================
 def main():
-    """
-    Fonction principale de l'application
-    """
-    # Rafraîchissement automatique toutes les 60 secondes (60000 ms)
     st_autorefresh(interval=60000, limit=None, key="auto_refresh")
 
-    # Titre de l'application
-    st.title("🛰️ Dashboard GPS - Milesight AT101")
-    st.markdown("*Visualisation des données du traceur GPS via Orange Live Objects*")
-    st.markdown("---")
+    # Header
+    st.markdown("""
+    <div class="custom-header">
+        <h1 class="header-title">🗺️ Surveillance GPS Bouées</h1>
+        <div class="header-status">
+            <span class="status-badge">● Connecté</span>
+            <span>MAJ auto: 1 min</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # Chargement de la configuration
+    # Config
     api_key, stream_id, erreurs = charger_configuration()
-
-    # Vérification de la configuration
     if erreurs:
-        afficher_erreur_configuration(erreurs)
-        return
+        st.error(f"Configuration manquante: {', '.join(erreurs)}")
+        st.stop()
 
-    # Configuration de la sidebar
-    st.sidebar.title("⚙️ Configuration")
-    st.sidebar.markdown("---")
+    # Données
+    positions_ref = charger_positions_reference()
+    alertes = charger_historique_alertes()
 
-    # Slider pour le nombre de points
-    limit = st.sidebar.slider(
-        "Nombre de points à récupérer",
-        min_value=10,
-        max_value=500,
-        value=100,
-        step=10,
-        help="Définit le nombre maximum d'enregistrements à charger depuis l'API"
-    )
+    donnees = recuperer_donnees_api(api_key, stream_id, 200)
+    if donnees is None:
+        st.error("Erreur de connexion à l'API")
+        st.stop()
 
-    # Bouton de rafraîchissement
-    if st.sidebar.button("🔄 Rafraîchir les données", use_container_width=True):
-        # Vider le cache pour forcer le rechargement
-        st.cache_data.clear()
-        st.rerun()
-
-    # Informations de connexion
-    st.sidebar.markdown("---")
-    st.sidebar.success("✅ Connecté à Live Objects")
-    st.sidebar.info("🔄 Rafraîchissement auto: 1 min")
-    st.sidebar.caption(f"Stream ID: {stream_id[:8]}...")
-
-    # Récupération des données
-    with st.spinner("Chargement des données depuis l'API..."):
-        donnees_brutes = recuperer_donnees_api(api_key, stream_id, limit)
-
-    if donnees_brutes is None:
-        st.error("❌ Impossible de récupérer les données. Vérifiez votre connexion et vos identifiants.")
-        return
-
-    # Traitement des données
-    df = aplatir_donnees(donnees_brutes)
-
+    df = aplatir_donnees(donnees, stream_id)
     if df.empty:
-        st.warning("⚠️ Aucune donnée disponible pour la période sélectionnée.")
-        return
+        st.warning("Aucune donnée disponible")
+        st.stop()
 
-    # Affichage des KPIs
-    afficher_kpis(df)
+    positions_ref = definir_position_reference(df, positions_ref)
+    df, alertes = verifier_sorties_zone(df, positions_ref, alertes)
 
-    st.markdown("---")
+    # Stats
+    df_gps = df.dropna(subset=["Latitude", "Longitude"])
+    nb_hors = (df["Hors_Zone"] == True).sum()
+    nb_tilt = (df["Tilt_Alert"] == True).sum()
 
-    # Disposition en deux colonnes pour la carte et le graphique
-    col_carte, col_graph = st.columns(2)
+    # Tabs
+    tab_carte, tab_alertes = st.tabs(["🗺️ Carte temps réel", f"🚨 Alertes ({len(alertes)})"])
 
-    with col_carte:
-        afficher_carte(df)
+    with tab_carte:
+        # Stats
+        st.markdown(f"""
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-value">{len(df_gps)}</div>
+                <div class="stat-label">Points GPS</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value {'alert' if nb_hors > 0 else ''}">{nb_hors}</div>
+                <div class="stat-label">Hors zone</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value {'alert' if nb_tilt > 0 else ''}">{nb_tilt}</div>
+                <div class="stat-label">Renversements</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{df_gps['Timestamp'].max().strftime('%H:%M') if not df_gps.empty and pd.notna(df_gps['Timestamp'].max()) else 'N/A'}</div>
+                <div class="stat-label">Dernière MAJ</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    with col_graph:
-        afficher_graphique_temperature(df)
+        # Légende
+        st.markdown("""
+        <div class="legend-container">
+            <div class="legend-title">Légende</div>
+            <div class="legend-items">
+                <div class="legend-item"><div class="legend-dot" style="background:#3498db"></div>Référence</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#27ae60"></div>OK</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#f39c12"></div>Renversement</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#e74c3c"></div>Hors zone</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#9b59b6"></div>Hors zone + Renversement</div>
+                <div class="legend-item"><div class="legend-circle"></div>Zone sûreté (1km)</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.markdown("---")
+        # Carte
+        if not df_gps.empty or positions_ref:
+            carte = creer_carte(df, positions_ref)
+            st_folium(carte, use_container_width=True, height=550, returned_objects=[])
+        else:
+            st.warning("Aucune donnée GPS valide")
 
-    # Tableau des données brutes
-    afficher_tableau_donnees(df)
+    with tab_alertes:
+        st.markdown("### Historique des alertes")
 
-    # Footer
-    st.markdown("---")
-    st.caption(
-        f"Dashboard GPS AT101 | "
-        f"Données chargées: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} | "
-        f"Points affichés: {len(df)}"
-    )
+        if not alertes:
+            st.info("Aucune alerte enregistrée")
+        else:
+            # Filtre
+            filtre = st.selectbox("Filtrer", ["Toutes", "Sortie zone", "Renversement"], key="filtre_alertes")
+
+            alertes_filtrees = alertes
+            if filtre == "Sortie zone":
+                alertes_filtrees = [a for a in alertes if a["type"] == "SORTIE_ZONE"]
+            elif filtre == "Renversement":
+                alertes_filtrees = [a for a in alertes if a["type"] == "RENVERSEMENT"]
+
+            # Tableau
+            if alertes_filtrees:
+                data = []
+                for a in alertes_filtrees:
+                    data.append({
+                        "Date": a["timestamp"],
+                        "Type": "🔴 Sortie zone" if a["type"] == "SORTIE_ZONE" else "🟠 Renversement",
+                        "Appareil": a["appareil"][-16:],
+                        "Détails": f"Distance: {a['details'].get('distance', '-')}m" if a["type"] == "SORTIE_ZONE" else "Bouée renversée",
+                        "Heure point": a["details"].get("timestamp_point", "-")
+                    })
+                st.dataframe(pd.DataFrame(data), use_container_width=True, hide_index=True, height=450)
+                st.caption(f"Total: {len(alertes_filtrees)} alertes")
 
 
-# =============================================================================
-# POINT D'ENTRÉE
-# =============================================================================
 if __name__ == "__main__":
     main()
