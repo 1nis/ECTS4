@@ -2,6 +2,31 @@
   "urn:lo:nsid:lora:24E124745E033174": {
     "latitude": 43.302205,
     "longitude": 5.378178,
-    "date_reference": "16/01/2026 14:37:26"
+    "date_reference": "16/01/2026 14:37:26",
+    "nom": "Capteur Reel"
+  },
+  "BOUEE-VP-001": {
+    "latitude": 43.2951,
+    "longitude": 5.3743,
+    "date_reference": "23/01/2026 00:00:00",
+    "nom": "Quai des Belges"
+  },
+  "BOUEE-VP-002": {
+    "latitude": 43.2965,
+    "longitude": 5.3622,
+    "date_reference": "23/01/2026 00:00:00",
+    "nom": "Fort Saint-Jean"
+  },
+  "BOUEE-VP-003": {
+    "latitude": 43.2943,
+    "longitude": 5.3687,
+    "date_reference": "23/01/2026 00:00:00",
+    "nom": "Quai du Port"
+  },
+  "BOUEE-VP-004": {
+    "latitude": 43.2926,
+    "longitude": 5.3696,
+    "date_reference": "23/01/2026 00:00:00",
+    "nom": "Quai de Rive Neuve"
   }
 }
